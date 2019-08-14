@@ -321,7 +321,7 @@ class CDSLSampler:
 		:param node: node to be processed
 		:return: Value of the inner node or empty string ''
 		"""
-                if self._flag:
+                '''if self._flag:
                     pass
                 elif self._index >= len(self._path):
                     self._path.append(0)
@@ -335,7 +335,9 @@ class CDSLSampler:
                 self._maxlist[self._index] = 1
 
                 self._index += 1
-                self._flag = False
+                self._flag = False'''
+
+                option = False
 
 		if option:
 			return self.generic_sampler(node.expr)

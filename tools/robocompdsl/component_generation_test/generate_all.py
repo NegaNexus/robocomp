@@ -89,6 +89,7 @@ class CDSLSampler:
                 self._flag = True 
                 self._index = 0
                 self._path = [0]
+                self._maxlist = [1]
 		self._available_idsls = []
 		self._available_interfaces = []
 		self._used_idsl = []
@@ -115,11 +116,14 @@ class CDSLSampler:
 		:return:
 		"""
 
-                #self._flag = False
-                while self._path[-1] == 1:
+                print self._path
+                print self._maxlist
+                print "----------------"
+                while self._path[-1] == self._maxlist[-1]:
                     self._path.pop()
-                    #self._path[-1] += 1
-                    #self._path.append(0)
+                    self._maxlist.pop()
+                    if self._path == [] or self._maxlist == []:
+                        return None
                 self._index = 0
 		self._available_idsls = get_available_idsls()
 		self._used_idsl = []
@@ -229,7 +233,23 @@ class CDSLSampler:
 
 	def generate_zero_or_more(self, node):
 		text = ''
-		times_to_repeat = random.randint(0, 0)#MAX_IMPORTS)
+
+                if self._flag:
+                    print "flag"
+                elif self._index >= len(self._path):
+                    self._path.append(0)
+                    self._maxlist.append(1)
+                elif self._index == len(self._path)-1:
+                    if self._path[self._index] < MAX_IMPORTS+1:
+                        self._path[self._index] += 1
+                
+		times_to_repeat = self._path[self._index]
+
+                self._maxlist[self._index] = MAX_IMPORTS
+
+                self._index += 1
+                self._flag = False
+
 		for count in range(times_to_repeat):
 			text += self.generic_sampler(node.expr)  # + ' '
 		return str(text)
@@ -249,7 +269,7 @@ class CDSLSampler:
 
 	def generate_match_first(self, node):
 		"""
-		Return one random option from several defined on the node
+		Return an option from several defined on the node
 
 		:param node: node to be processed
 		:return: only one of multiple options
@@ -258,44 +278,49 @@ class CDSLSampler:
 		# TODO: add some option for weighted random
 		text = ''
 
-                '''print "Index:", self._index
-                print "Node:", len(node.exprs)
-                print "Path length:", len(self._path)
-                print "Path:", self._path
-                print "Choices:", node.exprs
-                print "____"'''
                 if self._flag:
                     print "flag"
                 elif self._index >= len(self._path):
                     self._path.append(0)
+                    self._maxlist.append(1)
                 elif self._index == len(self._path)-1:
                     if self._path[self._index] < 2:
-                        self._path[self._index] += 1 
+                        self._path[self._index] += 1
                 
-
-                #random_child = random.choice(node.exprs)
-                #index = self._choices[id(node.exprs)]
                 child = node.exprs[self._path[self._index]]
-                print self._path
+
+                self._maxlist[self._index] = 1
 
                 self._index += 1
                 self._flag = False
 
 		text += self.generic_sampler(child)
 
-                #if self._index == len(self._path)-1 and self._path[self._index] == 1:
-                #    self._path[self._index] = 0
 		return text
 
 	def generate_optional(self, node):
 		"""
-		Value or empty string is returned based on a random boolean
+		Value or empty string is returned
 
 		:param node: node to be processed
 		:return: Value of the inner node or empty string ''
 		"""
-		#option = bool(random.getrandbits(1))
-                option = True
+                if self._flag:
+                    print "flag"
+                elif self._index >= len(self._path):
+                    self._path.append(0)
+                    self._maxlist.append(1)
+                elif self._index == len(self._path)-1:
+                    if self._path[self._index] < 2:
+                        self._path[self._index] += 1
+
+                option = self._path[self._index]
+                
+                self._maxlist[self._index] = 1
+
+                self._index += 1
+                self._flag = False
+
 		if option:
 			return self.generic_sampler(node.expr)
 		else:
@@ -441,8 +466,10 @@ class CDSLSampler:
 if __name__ == '__main__':
 	root = parseCDSL.CDSLParsing.getCDSLParser()
 	generator = CDSLSampler()
-	for i in range(40):
-		output_cdsl = generator.generate_valid_component(root)
+
+        output_cdsl = generator.generate_valid_component(root)
+        while output_cdsl != None:
+                output_cdsl = generator.generate_valid_component(root)
 		print(output_cdsl)
 	print(generator.special_interfaces)
 	pprint(generator.nodes_with_names)
